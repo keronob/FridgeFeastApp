@@ -1,3 +1,156 @@
+
+'use client';
+
+import {useState} from 'react';
+import {generateRecipe} from '@/ai/flows/generate-recipe';
+import {Button} from '@/components/ui/button';
+import {Textarea} from '@/components/ui/textarea';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
+import {useToast} from '@/hooks/use-toast';
+import {useEffect} from 'react';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Separator} from '@/components/ui/separator';
+
+interface Recipe {
+  recipeName: string;
+  instructions: string;
+  requiredCookingTime: string;
+}
+
 export default function Home() {
-  return <></>;
+  const [ingredients, setIngredients] = useState('');
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
+  const {toast} = useToast();
+
+  // Load saved recipes from local storage on component mount
+  useEffect(() => {
+    const storedRecipes = localStorage.getItem('savedRecipes');
+    if (storedRecipes) {
+      setSavedRecipes(JSON.parse(storedRecipes));
+    }
+  }, []);
+
+  // Save recipes to local storage whenever savedRecipes changes
+  useEffect(() => {
+    localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
+  }, [savedRecipes]);
+
+  const handleGenerateRecipe = async () => {
+    if (!ingredients) {
+      toast({
+        title: 'Error',
+        description: 'Please enter some ingredients.',
+      });
+      return;
+    }
+
+    try {
+      const generatedRecipe = await generateRecipe({ingredients});
+      setRecipe(generatedRecipe);
+    } catch (error: any) {
+      console.error('Error generating recipe:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate recipe. Please try again.',
+      });
+    }
+  };
+
+  const handleSaveRecipe = () => {
+    if (!recipe) {
+      toast({
+        title: 'Error',
+        description: 'No recipe to save.',
+      });
+      return;
+    }
+
+    setSavedRecipes(prevRecipes => {
+      const newRecipes = [...prevRecipes, recipe];
+      toast({
+        title: 'Recipe Saved',
+        description: 'Recipe saved to local storage.',
+      });
+      return newRecipes;
+    });
+  };
+
+  return (
+    <div className="container mx-auto p-4 flex flex-col gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Enter Your Ingredients</CardTitle>
+          <CardDescription>
+            Enter the ingredients you have available, separated by commas.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="ingredients">Ingredients</Label>
+            <Textarea
+              id="ingredients"
+              placeholder="e.g., chicken, rice, broccoli"
+              value={ingredients}
+              onChange={(e) => setIngredients(e.target.value)}
+            />
+          </div>
+          <Button onClick={handleGenerateRecipe}>Generate Recipe</Button>
+        </CardContent>
+      </Card>
+
+      {recipe && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{recipe.recipeName}</CardTitle>
+            <CardDescription>
+              {`Cooking Time: ${recipe.requiredCookingTime}`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-2">
+              <Label>Instructions</Label>
+              <Textarea
+                id="instructions"
+                readOnly
+                value={recipe.instructions}
+                className="min-h-[100px] resize-none"
+              />
+            </div>
+            <Button onClick={handleSaveRecipe}>Save Recipe</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {savedRecipes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Saved Recipes</CardTitle>
+            <CardDescription>Your locally saved recipes.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {savedRecipes.map((savedRecipe, index) => (
+              <Card key={index} className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>{savedRecipe.recipeName}</CardTitle>
+                  <CardDescription>
+                    {`Cooking Time: ${savedRecipe.requiredCookingTime}`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-2">
+                  <Label>Instructions</Label>
+                  <Textarea
+                    readOnly
+                    value={savedRecipe.instructions}
+                    className="min-h-[100px] resize-none"
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 }
