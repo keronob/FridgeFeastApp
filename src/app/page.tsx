@@ -10,7 +10,7 @@ import {useEffect} from 'react';
 import {Label} from '@/components/ui/label';
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from '@/components/ui/dialog';
 import {Separator} from '@/components/ui/separator';
-import {Circle} from 'lucide-react';
+import {Circle, ForkKnife} from 'lucide-react';
 
 interface Recipe {
   recipeName: string;
@@ -146,7 +146,7 @@ export default function Home() {
                   size="icon"
                   onClick={() => handleOpenRecipe(savedRecipe)}
                 >
-                  <Circle className="h-4 w-4" />
+                  <ForkKnife className="h-4 w-4" />
                   <span className="sr-only">{savedRecipe.recipeName}</span>
                 </Button>
               </DialogTrigger>
