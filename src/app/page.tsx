@@ -1,4 +1,3 @@
-
 'use client';
 
 import {useState} from 'react';
@@ -8,9 +7,10 @@ import {Textarea} from '@/components/ui/textarea';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {useToast} from '@/hooks/use-toast';
 import {useEffect} from 'react';
-import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from '@/components/ui/dialog';
 import {Separator} from '@/components/ui/separator';
+import {Circle} from 'lucide-react';
 
 interface Recipe {
   recipeName: string;
@@ -23,6 +23,7 @@ export default function Home() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
   const {toast} = useToast();
+  const [openRecipe, setOpenRecipe] = useState<Recipe | null>(null);
 
   // Load saved recipes from local storage on component mount
   useEffect(() => {
@@ -77,6 +78,14 @@ export default function Home() {
     });
   };
 
+  const handleOpenRecipe = (recipe: Recipe) => {
+    setOpenRecipe(recipe);
+  };
+
+  const handleCloseRecipe = () => {
+    setOpenRecipe(null);
+  };
+
   return (
     <div className="container mx-auto p-4 flex flex-col gap-4">
       <Card>
@@ -123,34 +132,46 @@ export default function Home() {
         </Card>
       )}
 
-      {savedRecipes.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Saved Recipes</CardTitle>
-            <CardDescription>Your locally saved recipes.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {savedRecipes.map((savedRecipe, index) => (
-              <Card key={index} className="shadow-sm">
-                <CardHeader>
-                  <CardTitle>{savedRecipe.recipeName}</CardTitle>
-                  <CardDescription>
+      <Card>
+        <CardHeader>
+          <CardTitle>Saved Recipes</CardTitle>
+          <CardDescription>Click a recipe to view it.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex gap-4">
+          {savedRecipes.map((savedRecipe, index) => (
+            <Dialog key={index} onOpenChange={(open) => !open ? handleCloseRecipe() : null}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleOpenRecipe(savedRecipe)}
+                >
+                  <Circle className="h-4 w-4" />
+                  <span className="sr-only">{savedRecipe.recipeName}</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{savedRecipe.recipeName}</DialogTitle>
+                  <DialogDescription>
                     {`Cooking Time: ${savedRecipe.requiredCookingTime}`}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-2">
-                  <Label>Instructions</Label>
-                  <Textarea
-                    readOnly
-                    value={savedRecipe.instructions}
-                    className="min-h-[100px] resize-none"
-                  />
-                </CardContent>
-              </Card>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label>Instructions</Label>
+                    <Textarea
+                      readOnly
+                      value={savedRecipe.instructions}
+                      className="min-h-[100px] resize-none"
+                    />
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
